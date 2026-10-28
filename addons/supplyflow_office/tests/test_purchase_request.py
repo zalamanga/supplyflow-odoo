@@ -240,14 +240,35 @@ class TestPurchaseRequest(TransactionCase):
 
     def test_company_record_rules_hide_requests_and_lines(self):
         request = self._request()
+        request.line_ids.ensure_one()
+        self.assertTrue(request.exists())
+        self.assertTrue(request.line_ids.exists())
+        self.assertEqual(request.company_id, self.company)
         other_user = new_test_user(
             self.env, login="sf_req_other_company", groups="base.group_user,supplyflow_office.group_user,stock.group_stock_user,purchase.group_purchase_user",
-            company_id=self.other_company.id,
+            company_id=self.other_company.id, company_ids=[fields.Command.set(self.other_company.ids)],
         )
-        self.assertFalse(self.env["supplyflow.request"].with_user(other_user).search([("id", "=", request.id)]))
-        self.assertFalse(self.env["supplyflow.request.line"].with_user(other_user).search([("id", "=", request.line_ids.id)]))
+        context = {"allowed_company_ids": other_user.company_ids.ids}
+        foreign_request = request.with_user(other_user).with_context(**context)
+        foreign_line = request.line_ids.with_user(other_user).with_context(**context)
+        request_model = self.env["supplyflow.request"].with_user(other_user).with_context(**context)
+        line_model = self.env["supplyflow.request.line"].with_user(other_user).with_context(**context)
+        request_model.check_access("read")
+        line_model.check_access("read")
+        self.assertFalse(request_model.search([("id", "=", request.id)]))
+        self.assertFalse(line_model.search([("id", "=", request.line_ids.id)]))
         with self.assertRaises(AccessError):
-            request.with_user(other_user).action_submit()
+            foreign_request.read(["name", "purpose"])
+        with self.assertRaises(AccessError):
+            foreign_line.read(["product_qty", "price_estimated"])
+        with self.assertRaises(AccessError):
+            foreign_request.write({"purpose": "An unauthorized company edit"})
+        with self.assertRaises(AccessError):
+            foreign_line.write({"product_qty": 99})
+        with self.assertRaises(AccessError):
+            foreign_request.action_submit()
+        self.assertEqual(request.state, "draft")
+        self.assertEqual(request.line_ids.product_qty, 12)
 
     def test_empty_invalid_and_non_stock_items_are_rejected(self):
         empty = self._request(line_ids=[])

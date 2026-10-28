@@ -276,7 +276,38 @@ class TestSupplierIssue(TransactionCase):
             reviewer.write({"resolution_note": "A changed decision"})
 
     def test_issue_company_must_match_received_shipment(self):
+        issue = self._issue()
+        issue.line_ids.ensure_one()
+        self.assertTrue(issue.exists())
+        self.assertTrue(issue.line_ids.exists())
+        self.assertEqual(issue.company_id, self.company)
         other_company = self.env["res.company"].create({"name": "Supplier issue other company"})
+        other_user = new_test_user(
+            self.env, login="supplyflow_issue_foreign_company",
+            groups="base.group_user,stock.group_stock_user,supplyflow_office.group_approver",
+            company_id=other_company.id, company_ids=[Command.set(other_company.ids)],
+        )
+        context = {"allowed_company_ids": other_user.company_ids.ids}
+        foreign_issue = issue.with_user(other_user).with_context(**context)
+        foreign_line = issue.line_ids.with_user(other_user).with_context(**context)
+        issue_model = self.env["supplyflow.issue"].with_user(other_user).with_context(**context)
+        line_model = self.env["supplyflow.issue.line"].with_user(other_user).with_context(**context)
+        issue_model.check_access("read")
+        line_model.check_access("read")
+        self.assertFalse(issue_model.search([("id", "=", issue.id)]))
+        self.assertFalse(line_model.search([("id", "=", issue.line_ids.id)]))
+        with self.assertRaises(AccessError):
+            foreign_issue.read(["name", "description"])
+        with self.assertRaises(AccessError):
+            foreign_line.read(["affected_qty"])
+        with self.assertRaises(AccessError):
+            foreign_issue.write({"description": "An unauthorized company edit"})
+        with self.assertRaises(AccessError):
+            foreign_line.write({"affected_qty": 99})
+        with self.assertRaises(AccessError):
+            foreign_issue.action_submit()
+        self.assertEqual(issue.state, "draft")
+        self.assertEqual(issue.line_ids.affected_qty, 3)
         with self.assertRaises(AccessError):
             self._issue(company_id=other_company.id)
         self.reporter.write({"company_ids": [Command.link(other_company.id)]})
