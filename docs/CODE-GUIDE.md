@@ -2,12 +2,15 @@
 
 SupplyFlow Office memakai Odoo Community sebagai ERP dan menambahkan addon `supplyflow_office`. Odoo menyediakan login, pengguna, perusahaan, ORM, web client, Sales, Purchase, Inventory, dan mesin stok. Kode proyek menambahkan permintaan pembelian internal, persetujuan independen, penanganan masalah penerimaan, ringkasan pekerjaan, serta alat instalasi/pengujian lokal.
 
+Untuk mengikuti urutan pembuatannya, mulai dari [tutorial delapan bab](tutorial/README.md). Panduan ini tetap menjadi ringkasan arsitektur kode; tutorial memberi langkah penulisan, cuplikan per fungsi, checkpoint, dan latihan dari kerangka addon sampai versi lengkap.
+
 Penjelasan yang tepat saat interview: “Saya memperluas Odoo Community untuk distributor perlengkapan kantor. Saya menghubungkan permintaan yang disetujui ke RFQ native, lalu kasus receipt ke retur pemasok, dengan aturan akses dan transisi di server.” Ini menjelaskan pekerjaan custom tanpa mengklaim membangun seluruh ERP dari nol.
 
 ## Mulai menjalankan dan membaca kode
 
 ```powershell
 cd "D:\kerjaan\done push repo\supplyflow-odoo"
+Remove-Item Env:COMPOSE_PROJECT_NAME -ErrorAction SilentlyContinue
 .\scripts\Start.ps1 -WithTrainingData
 ```
 

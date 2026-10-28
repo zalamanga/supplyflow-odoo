@@ -4,6 +4,10 @@ ERP distributor perlengkapan kantor berbasis Odoo Community 19. Pembelian, pener
 
 Proyek ini memakai Python, PostgreSQL 17, XML/QWeb, Owl JavaScript, dan Docker Compose. Tidak memerlukan modul Enterprise.
 
+## Belajar membuat proyek ini
+
+[Tutorial Odoo dari nol](docs/tutorial/README.md) menjelaskan urutan pembuatan, penempatan kode, fungsi setiap file, masukan/hasil fungsi, serta cara mengecek setiap tahap. Tersedia delapan bab, termasuk indeks 86 fungsi Python ERP/tool operasinya dan helper PowerShell, Owl, serta browser. [Buku PDF](docs/tutorial/supplyflow-office-tutorial.pdf) menyediakan materi yang sama untuk dibaca terpisah.
+
 ## Tampilan aplikasi
 
 Gambar diambil dari Odoo yang dijalankan secara lokal. Nama berawalan `[Training]` adalah data latihan sintetis; hitungan workspace berasal dari dokumen latihan dan pemeriksaan, bukan aktivitas perusahaan nyata.

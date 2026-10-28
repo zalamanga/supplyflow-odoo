@@ -62,7 +62,7 @@ flowchart TD
 
 Pembuatan picking retur dan validasi picking merupakan dua tindakan terpisah. Retur yang masih menunggu validasi belum membuktikan bahwa barang sudah dikirim balik. Catatan penyelesaian shortage tidak otomatis membuat refund, credit note, atau jurnal.
 
-Kasus tidak mempunyai alur tolak/reset ke draft. Pelapor atau penyetuju dapat membatalkan kasus sebelum hasil penanganan selesai; pembatalan kasus yang sudah disetujui memerlukan penyetuju independen. Kasus yang sudah diterima penyelesaiannya atau menghasilkan picking retur tidak dibatalkan lewat alur kasus.
+Kasus tidak mempunyai alur tolak/reset ke draft. Pelapor atau anggota Approver dapat membatalkan kasus pada status yang diizinkan. Pembatalan kasus yang sudah disetujui memerlukan grup Approver, tetapi aksi pembatalan ini tidak menerapkan pemeriksaan reviewer independen. Kasus yang sudah diterima penyelesaiannya atau menghasilkan picking retur tidak dibatalkan lewat alur kasus.
 
 ## Penjualan dan pengiriman
 
