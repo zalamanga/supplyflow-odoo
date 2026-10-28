@@ -14,15 +14,17 @@ Nada antarmuka langsung dan operasional. Pesan kesalahan menyebut hal yang perlu
 
 | Dial | Nilai | Penerapan |
 | --- | --- | --- |
-| ENERGY | 2 dari 5 | Memakai aksen dan status Odoo untuk menonjolkan tindakan kerja; tidak menambah efek dekoratif |
-| RHYTHM | 2 dari 5 | Daftar untuk membandingkan dokumen, form untuk mengerjakan satu dokumen, ringkasan untuk menuju pekerjaan yang menunggu |
-| MOTION | 1 dari 5 | Perilaku interaksi native; tidak ada carousel, animasi latar, atau transisi tambahan |
+| ENERGY | 2 dari 3 | Memakai aksen dan status Odoo untuk menonjolkan tindakan kerja; tidak menambah efek dekoratif |
+| RHYTHM | 2 dari 3 | Daftar untuk membandingkan dokumen, form untuk mengerjakan satu dokumen, ringkasan untuk menuju pekerjaan yang menunggu |
+| MOTION | 1 dari 3 | Perilaku interaksi native; tidak ada carousel, animasi latar, atau transisi tambahan |
 
 Angka dial adalah keputusan desain, bukan metrik hasil penelitian pengguna. Motif identitas berasal dari alur dokumen: nomor permintaan, status, gudang, dan tautan ke RFQ/receipt/retur selalu memakai lokasi serta istilah yang konsisten.
 
 ## Warna, tipografi, dan komponen
 
 Palet, font, ukuran kontrol, jarak, focus ring, dan dialog mengikuti Odoo. Tidak ada tema gelap atau penggantian font khusus. Pilihan ini mempertahankan keterbacaan dan konsistensi dengan layar native, bukan membentuk landing page promosi.
+
+Label field readonly pada dua form addon memakai `#495057` dengan opacity penuh. Label tetap dibutuhkan untuk membaca dokumen yang sudah diajukan; mengurangi kontrasnya seperti kontrol nonaktif akan menyulitkan pembacaan pada ponsel. Aturan CSS dibatasi ke kelas `sf_document`, sehingga tidak mengganti tema aplikasi native lain.
 
 | Elemen | Tujuan |
 | --- | --- |
@@ -44,7 +46,7 @@ Kolom utama menampilkan nomor, tanggal kebutuhan, pengaju, pemasok, gudang, esti
 
 ### Workspace
 
-Workspace Owl merangkum pekerjaan yang perlu ditindaklanjuti sebelum menampilkan permintaan terbaru. Angka membuka daftar dengan filter yang sesuai. Tautan incoming, outgoing, dan purchase order mengarah ke layar native yang benar-benar dapat dibuka dengan izin pengguna.
+Workspace Owl merangkum pekerjaan yang perlu ditindaklanjuti sebelum menampilkan permintaan terbaru. Angka membuka daftar dengan filter yang sesuai, sedangkan nomor permintaan membuka form terkait. Petunjuk singkat menyebut aplikasi standar untuk RFQ, receipt, delivery, dan laporan stok.
 
 Prioritas visualnya adalah pekerjaan menunggu keputusan atau terlambat, bukan angka dekoratif. Ringkasan retur hanya menghitung picking tertaut yang belum selesai atau dibatalkan; status kasus dan status perpindahan fisik tidak disamakan.
 

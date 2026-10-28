@@ -1,0 +1,4 @@
+services:
+  odoo:
+    healthcheck:
+      disable: true

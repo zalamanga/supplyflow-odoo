@@ -14,7 +14,7 @@ Petugas gudang juga perlu mencatat barang rusak, barang yang tidak sesuai, atau 
 
 | Peran | Tugas | Batas akses addon |
 | --- | --- | --- |
-| Pengaju | Menulis permintaan pembelian dan melaporkan masalah penerimaan | Mengelola dokumennya sendiri pada perusahaan yang diizinkan; tidak menyetujui pengajuannya sendiri |
+| Pengaju | Menulis permintaan pembelian dan melaporkan masalah penerimaan | Membaca dokumen perusahaan aktif yang diizinkan; mengedit draft miliknya sendiri; tidak menyetujui pengajuannya sendiri |
 | Penyetuju | Meninjau kebutuhan dan memutuskan penanganan masalah | Membaca dan memutuskan dokumen dalam perusahaan yang diizinkan; wajib orang lain dari pengaju/pembuat |
 | Petugas pembelian | Mengolah RFQ dan purchase order | Menggunakan izin Purchase bawaan Odoo; izin penyetuju addon saja tidak otomatis memberi seluruh izin Purchase |
 | Petugas gudang | Menerima, mengirim, dan meretur barang | Menggunakan izin Inventory bawaan Odoo; persetujuan addon tidak memvalidasi picking secara otomatis |
@@ -54,7 +54,7 @@ Model `supplyflow.request.line` memuat produk, deskripsi, satuan dasar produk, j
 | --- | --- | --- |
 | `draft` | Pengaju masih mengisi dokumen | Ajukan atau batalkan |
 | `submitted` | Dokumen menunggu peninjauan | Setujui, tolak dengan alasan, atau batalkan oleh pengaju |
-| `approved` | Penyetuju menerima permintaan | Buat RFQ; pembatalan oleh penyetuju independen harus beralasan |
+| `approved` | Penyetuju menerima permintaan | Buat RFQ; pembatalan hanya oleh penyetuju independen |
 | `rejected` | Penyetuju menolak dan mencatat alasan | Pengaju mengembalikan ke draft atau membatalkan |
 | `rfq_created` | RFQ telah ditautkan | Buka RFQ yang sama; tidak membuat RFQ kedua |
 | `cancelled` | Siklus permintaan dihentikan | Tidak diproses lebih lanjut |
@@ -79,10 +79,10 @@ Kasus hanya memakai receipt masuk yang sudah selesai. Jenis masalah meliputi bar
 
 1. Pelapor membuat kasus, memilih receipt, lalu menjelaskan barang dan jumlah yang bermasalah.
 2. Pelapor mengajukan kasus. Isi pokok kasus dibekukan untuk peninjauan.
-3. Penyetuju lain menyetujui atau menolak dengan alasan. Penolakan dapat dikembalikan ke draft oleh pelapor untuk diperbaiki.
-4. Untuk barang yang benar-benar ada dan dapat diretur, penyetuju membuat picking retur melalui mekanisme Odoo. Kasus menautkan satu picking; panggilan berulang tidak membuat retur baru.
+3. Penyetuju lain memilih persetujuan retur atau penyelesaian tanpa retur dengan catatan. Kasus tidak mempunyai status ditolak/reset ke draft; pelapor atau penyetuju dapat membatalkan kasus yang belum selesai menurut aturan statusnya.
+4. Setelah persetujuan retur untuk barang yang benar-benar ada dan dapat dikembalikan, penyetuju membuat picking retur melalui mekanisme Odoo. Kasus menautkan satu picking; panggilan berulang tidak membuat retur baru.
 5. Petugas gudang memeriksa lokasi, jumlah, lot/serial bila digunakan, lalu memvalidasi retur dari Inventory. Pembuatan picking belum mengurangi stok.
-6. Untuk penyelesaian tanpa perpindahan barang, penyetuju memasukkan catatan keputusan. Catatan itu tidak membuat kredit pemasok atau jurnal akuntansi.
+6. Untuk penyelesaian tanpa perpindahan barang, penyetuju memasukkan catatan keputusan saat kasus masih diajukan, lalu memilih penyelesaian tanpa retur. Catatan itu tidak membuat kredit pemasok atau jurnal akuntansi.
 
 Retur harus mengikuti produk, satuan, perusahaan, lokasi, dan jumlah yang masih dapat diretur dari receipt sumber. Picking yang dibatalkan atau belum selesai tidak boleh menjadi sumber. Kasus yang telah menghasilkan retur tidak boleh menghasilkan retur kedua melalui addon. Retur manual di luar addon tetap diperhitungkan dalam batas jumlah yang masih tersedia.
 
@@ -94,13 +94,13 @@ Beberapa gudang memakai konfigurasi Odoo. Permintaan pembelian memilih gudang pe
 
 ## Workspace pekerjaan
 
-Halaman workspace menggunakan komponen Owl di dalam web client Odoo. Ringkasannya berasal dari data yang boleh dibaca pengguna: permintaan yang menunggu persetujuan, kasus yang menunggu keputusan, kasus terbuka yang melewati tenggat, dan picking retur kasus yang belum selesai atau dibatalkan. Daftar permintaan terbaru serta tautan ke incoming, outgoing, dan purchase order membantu pengguna membuka pekerjaan yang mendasarinya.
+Halaman workspace menggunakan komponen Owl di dalam web client Odoo. Ringkasannya berasal dari data yang boleh dibaca pengguna: permintaan yang menunggu persetujuan, kasus terbuka berstatus diajukan/disetujui, kasus terbuka yang melewati tenggat, dan picking retur kasus yang belum selesai atau dibatalkan. Angka membuka daftar dengan filter terkait; delapan permintaan terbaru dapat dibuka langsung. Petunjuk pada halaman mengarahkan pengguna ke aplikasi standar Purchase, Inventory, dan Sales untuk transaksi native.
 
 Workspace tidak menampilkan nilai stok, omzet, saldo anggaran, atau metrik kinerja yang belum mempunyai perhitungan. Angka ringkasan dan daftar harus tunduk pada pembatasan perusahaan serta record rule yang sama dengan tampilan dokumen.
 
 ## Keamanan dan jejak keputusan
 
-ACL mengatur akses model; record rule membatasi perusahaan serta kepemilikan dokumen pengaju. Metode aksi memeriksa ulang izin, status, pemilik, dan larangan persetujuan mandiri. Penulisan langsung terhadap status, metadata persetujuan, dan tautan hasil harus ditolak bagi pengguna aplikasi biasa.
+ACL mengatur akses model dan record rule membatasi perusahaan aktif yang diizinkan. Anggota SupplyFlow dapat membaca dokumen dalam perusahaan tersebut untuk koordinasi operasional; pembatasan kepemilikan edit draft diterapkan pada metode server. Metode aksi memeriksa ulang izin, status, pemilik, dan larangan persetujuan mandiri. Penulisan langsung terhadap status, metadata persetujuan, dan tautan hasil harus ditolak bagi pengguna aplikasi biasa.
 
 Perubahan status dan keputusan dicatat pada chatter. Riwayat ini membantu penelusuran internal, tetapi bukan log yang kebal perubahan oleh administrator database. Data receipt dan purchase order tertaut tetap mengikuti izin model native masing-masing.
 
@@ -108,11 +108,11 @@ Skenario dua perusahaan harus diuji dengan akun yang hanya diizinkan pada satu p
 
 ## Instalasi dan data latihan
 
-Target instalasi lokal memakai Docker Compose, Odoo Community `19.0-20261015`, dan PostgreSQL 17. Aplikasi hanya dipublikasikan ke `127.0.0.1:8070`. Port database tidak dibuka ke host. Versi 19 dipilih secara sengaja untuk implementasi ini; dokumen tidak menyebutnya sebagai versi Odoo terbaru.
+Target instalasi lokal memakai Docker Compose, image resmi Odoo Community `19.0-20261015` dengan digest tetap, dan PostgreSQL 17. Kode addon dan script dipasang melalui bind mount read-only dari repo; tidak ada image custom yang perlu dibangun. Aplikasi hanya dipublikasikan ke `127.0.0.1:8070`. Port database tidak dibuka ke host. Versi 19 dipilih secara sengaja untuk implementasi ini; dokumen tidak menyebutnya sebagai versi Odoo terbaru.
 
 Setup harus membuat kredensial lokal yang tidak masuk Git. Password master Odoo, password role database, dan password pengguna aplikasi adalah tiga hal berbeda. Instalasi normal tidak boleh menyisakan login aktif `admin/admin`.
 
-Kontrak script menggunakan `scripts/Start.ps1` untuk build, inisialisasi, dan menyalakan stack. Opsi `-WithTrainingData` memilih data latihan. Kredensial login hasil setup disimpan lokal pada `.secrets/LOCAL-CREDENTIALS.txt`, yang wajib diabaikan Git. Script tambahan mencakup `Stop.ps1`, `Test.ps1`, `Backup.ps1`, `Restore.ps1`, dan `Load-TrainingData.ps1`. Detail argumen serta hasil eksekusi perlu diselaraskan dengan kode script sebelum rilis.
+Kontrak script menggunakan `scripts/Start.ps1` untuk menarik image resmi, menginisialisasi, dan menyalakan stack. Opsi `-SkipPull` melewati penarikan image bila image yang sesuai sudah tersedia; `-WithTrainingData` memilih data latihan. Kredensial login hasil setup disimpan lokal pada `.secrets/LOCAL-CREDENTIALS.txt`, yang wajib diabaikan Git. Script tambahan mencakup `Stop.ps1`, `Test.ps1`, `Backup.ps1`, `Restore.ps1`, dan `Load-TrainingData.ps1`. Hasil eksekusi perlu dicatat terpisah sebelum rilis.
 
 Data latihan bersifat opt-in dan diberi nama yang jelas. Data itu dapat menyediakan produk perlengkapan kantor, pemasok/pelanggan sintetis, gudang, dan transaksi untuk memeriksa alur. Instalasi tanpa pilihan data latihan tidak boleh diam-diam membuat transaksi contoh atau memakai data pribadi pengguna.
 

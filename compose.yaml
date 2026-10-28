@@ -1,0 +1,62 @@
+name: supplyflow-office
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: supplyflow
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+      - db_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/container/init-database.sh:/docker-entrypoint-initdb.d/10-supplyflow.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d supplyflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    shm_size: 128mb
+  odoo:
+    image: odoo:19.0-20261015@sha256:27f920e002c43a1af7022a68f3cc17db71a2f9f3348800cb050721ce54893e49
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      HOST: postgres
+      USER: supplyflow
+      PASSWORD_FILE: /run/secrets/db_password
+      ODOO_RC: /run/odoo/odoo.conf
+    secrets:
+      - db_password
+      - admin_password
+      - source: training_credentials
+        target: training_credentials.json
+    volumes:
+      - odoo_data:/var/lib/odoo
+      - ./.runtime/odoo.conf:/run/odoo/odoo.conf:ro
+      - ./addons:/mnt/extra-addons:ro
+      - ./scripts/container:/opt/supplyflow:ro
+    ports:
+      - "127.0.0.1:8070:8069"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8069/web/health', timeout=5)"]
+      interval: 15s
+      timeout: 8s
+      retries: 12
+      start_period: 60s
+    restart: unless-stopped
+    mem_limit: 1536m
+secrets:
+  postgres_password:
+    file: ./.secrets/postgres_password
+  db_password:
+    file: ./.secrets/db_password
+  admin_password:
+    file: ./.secrets/admin_password
+  training_credentials:
+    file: ./.secrets/training_credentials.json
+volumes:
+  postgres_data:
+  odoo_data:

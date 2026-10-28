@@ -1,0 +1,41 @@
+name: Verify SupplyFlow
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  odoo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Backup archive validation
+        run: python3 -m unittest discover -s tests -p test_backup_archive.py
+      - run: npx playwright install --with-deps chromium
+      - name: Initialize and run ORM tests
+        shell: pwsh
+        run: ./scripts/Test.ps1
+      - name: Start with synthetic training records
+        shell: pwsh
+        run: ./scripts/Start.ps1 -WithTrainingData -SkipPull
+      - name: Browser workflows
+        run: npm run test:browser
+        env:
+          PLAYWRIGHT_CHANNEL: chromium
+      - name: Container logs
+        if: failure()
+        run: docker compose logs --tail=150
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-diagnostics
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 3

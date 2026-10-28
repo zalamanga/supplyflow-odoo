@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_issue_list" model="ir.ui.view">
+        <field name="name">supplyflow.issue.list</field>
+        <field name="model">supplyflow.issue</field>
+        <field name="arch" type="xml">
+            <list decoration-warning="state == 'submitted'" decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="picking_id"/>
+                <field name="reason"/>
+                <field name="requester_id" optional="hide"/>
+                <field name="resolver_id"/>
+                <field name="resolution_due"/>
+                <field name="state" widget="badge"/>
+                <field name="return_state" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_issue_form" model="ir.ui.view">
+        <field name="name">supplyflow.issue.form</field>
+        <field name="model">supplyflow.issue</field>
+        <field name="arch" type="xml">
+            <form string="Supplier receipt issue" class="sf_document" duplicate="false">
+                <header>
+                    <button name="action_submit" type="object" string="Submit for review" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="Approve supplier return" class="oe_highlight" groups="supplyflow_office.group_approver" invisible="state != 'submitted' or reason == 'shortage' or requester_id == uid"/>
+                    <button name="action_accept_resolution" type="object" string="Resolve without return" groups="supplyflow_office.group_approver" invisible="state != 'submitted' or requester_id == uid"/>
+                    <button name="action_create_return" type="object" string="Create return transfer" class="oe_highlight" groups="supplyflow_office.group_approver" invisible="state != 'approved'"/>
+                    <button name="action_cancel" type="object" string="Cancel issue" groups="supplyflow_office.group_approver" invisible="state not in ['draft', 'submitted', 'approved']" confirm="Cancel this supplier issue? No stock transfer will be created."/>
+                    <button name="action_cancel" type="object" string="Cancel issue" groups="!supplyflow_office.group_approver" invisible="state not in ['draft', 'submitted'] or requester_id != uid" confirm="Cancel this supplier issue? No stock transfer will be created."/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,return_created"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_return" type="object" class="oe_stat_button" icon="fa-truck" invisible="not return_picking_id">
+                            <div class="o_stat_info"><span class="o_stat_text">Supplier return</span><field name="return_state"/></div>
+                        </button>
+                    </div>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <div class="alert alert-info" role="status" invisible="state != 'return_created'">
+                        The return transfer has been created. Stock changes when warehouse staff validate that transfer.
+                    </div>
+                    <div class="alert alert-info" role="status" invisible="reason != 'shortage' or state in ['accepted', 'cancelled']">
+                        Missing goods cannot be returned. Record the supplier agreement in the resolution note, then resolve without a return.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company" readonly="state != 'draft'"/>
+                            <field name="picking_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="reason" readonly="state != 'draft'"/>
+                            <field name="requester_id"/>
+                        </group>
+                        <group>
+                            <field name="resolver_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="resolution_due" readonly="state != 'draft'"/>
+                            <field name="approved_by_id" invisible="not approved_by_id"/>
+                            <field name="approved_at" invisible="not approved_at"/>
+                            <field name="return_picking_id" invisible="not return_picking_id"/>
+                        </group>
+                    </group>
+                    <separator string="What happened?"/>
+                    <field name="description" nolabel="1" class="w-100 mb-3" readonly="state != 'draft'" placeholder="Describe the condition, discrepancy, or supplier delivery problem."/>
+                    <field name="line_ids" readonly="state != 'draft'">
+                        <list editable="bottom">
+                            <field name="picking_id" column_invisible="True"/>
+                            <field name="company_id" column_invisible="True"/>
+                            <field name="move_id" options="{'no_create': True}"/>
+                            <field name="product_id" readonly="True"/>
+                            <field name="affected_qty"/>
+                            <field name="product_uom_id" readonly="True"/>
+                            <field name="returnable_qty" readonly="True"/>
+                        </list>
+                    </field>
+                    <separator string="Resolution"/>
+                    <field name="resolution_note" nolabel="1" class="w-100" readonly="state not in ['draft', 'submitted']" placeholder="Record the supplier agreement and explain why no physical return is required."/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="view_issue_search" model="ir.ui.view">
+        <field name="name">supplyflow.issue.search</field>
+        <field name="model">supplyflow.issue</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="picking_id"/>
+                <field name="resolver_id"/>
+                <filter name="my_issues" string="Reported by me" domain="[('requester_id', '=', uid)]"/>
+                <filter name="awaiting_review" string="Awaiting review" domain="[('state', '=', 'submitted')]"/>
+                <filter name="return_approved" string="Return approved" domain="[('state', '=', 'approved')]"/>
+                <filter name="open_reviewed" string="Open submitted issues" domain="[('state', 'in', ['submitted', 'approved'])]"/>
+                <filter name="waiting_warehouse" string="Awaiting warehouse" domain="[('state', '=', 'return_created'), ('return_picking_id.state', 'not in', ['done', 'cancel'])]"/>
+                <filter name="unresolved" string="Unresolved" domain="[('state', 'in', ['draft', 'submitted', 'approved'])]"/>
+                <filter name="overdue" string="Overdue resolution" domain="[('resolution_due', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', 'in', ['submitted', 'approved'])]"/>
+                <separator/>
+                <filter name="group_reason" string="Reason" context="{'group_by': 'reason'}"/>
+                <filter name="group_resolver" string="Resolver" context="{'group_by': 'resolver_id'}"/>
+                <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+    <record id="action_issues" model="ir.actions.act_window">
+        <field name="name">Supplier issues</field>
+        <field name="res_model">supplyflow.issue</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_issue_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Report a problem with a received shipment</p>
+            <p>Link the affected goods, assign a resolver, and obtain an independent review before creating a supplier return.</p>
+        </field>
+    </record>
+</odoo>

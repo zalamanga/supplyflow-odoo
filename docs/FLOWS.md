@@ -29,7 +29,7 @@ flowchart TD
     R --> S[Konfirmasi PO mengikuti aturan Odoo]
 ```
 
-Pengaju dapat membatalkan draft, pengajuan yang masih menunggu, atau permintaan yang ditolak. Pembatalan setelah persetujuan memerlukan penyetuju independen dan alasan. Dokumen yang sudah menghasilkan RFQ tidak dibatalkan lewat alur permintaan; petugas pembelian mengelola RFQ/PO tertaut menurut status dan izin Odoo.
+Pengaju dapat membatalkan draft, pengajuan yang masih menunggu, atau permintaan yang ditolak. Pembatalan setelah persetujuan memerlukan penyetuju independen; pelaksana dan waktu dicatat pada riwayat. Dokumen yang sudah menghasilkan RFQ tidak dibatalkan lewat alur permintaan; petugas pembelian mengelola RFQ/PO tertaut menurut status dan izin Odoo.
 
 Persetujuan mengizinkan pembuatan RFQ dari permintaan. Persetujuan itu tidak memesan barang, menerima barang, atau membayar pemasok. RFQ tetap dapat diperbarui di Purchase, sehingga estimasi permintaan bukan kontrol atas seluruh perubahan harga RFQ.
 
@@ -46,14 +46,10 @@ flowchart TD
     F --> G{Penyetuju independen?}
     G -- Tidak --> H[Tolak aksi di server]
     G -- Ya --> I{Keputusan}
-    I -- Tolak dengan alasan --> J[Kasus ditolak]
-    J --> K[Pelapor perbaiki melalui draft]
-    K --> B
-    I -- Setujui --> L[Kasus disetujui]
-    L --> M{Ada barang fisik yang dapat diretur?}
-    M -- Tidak / shortage --> N[Penyetuju menulis catatan penyelesaian]
+    I -- Selesaikan tanpa retur / shortage --> N[Penyetuju menulis catatan penyelesaian]
     N --> O[Kasus selesai tanpa perpindahan stok]
-    M -- Ya --> P[Kunci kasus dan periksa retur tertaut]
+    I -- Setujui retur barang fisik --> L[Kasus disetujui untuk retur]
+    L --> P[Kunci kasus dan periksa retur tertaut]
     P --> Q{Retur sudah ada?}
     Q -- Ya --> R[Buka picking yang sama]
     Q -- Tidak --> S[Periksa sisa jumlah yang dapat diretur]
@@ -65,6 +61,8 @@ flowchart TD
 ```
 
 Pembuatan picking retur dan validasi picking merupakan dua tindakan terpisah. Retur yang masih menunggu validasi belum membuktikan bahwa barang sudah dikirim balik. Catatan penyelesaian shortage tidak otomatis membuat refund, credit note, atau jurnal.
+
+Kasus tidak mempunyai alur tolak/reset ke draft. Pelapor atau penyetuju dapat membatalkan kasus sebelum hasil penanganan selesai; pembatalan kasus yang sudah disetujui memerlukan penyetuju independen. Kasus yang sudah diterima penyelesaiannya atau menghasilkan picking retur tidak dibatalkan lewat alur kasus.
 
 ## Penjualan dan pengiriman
 
@@ -111,7 +109,8 @@ Jumlah yang kurang masih dapat dikelola melalui backorder native. Kasus shortage
 ```mermaid
 flowchart TD
     A[Pengembang menjalankan scripts/Start.ps1] --> B[Siapkan secret lokal yang diabaikan Git]
-    B --> C[Docker Compose menjalankan PostgreSQL 17]
+    B --> P[Tarik image resmi bila SkipPull tidak dipilih]
+    P --> C[Docker Compose menjalankan PostgreSQL 17]
     C --> D[Tunggu database siap]
     D --> E[Inisialisasi database dan instal supplyflow_office]
     E --> F[Atur kredensial pengguna aplikasi]
@@ -132,7 +131,8 @@ flowchart LR
     C -->|ORM dan metode bisnis| N
     O -->|Koneksi internal Compose| P[(PostgreSQL 17)]
     O --> F[(Filestore dan data Odoo)]
-    A[Kode addon pada host] -->|Mount kode| O
+    A[Kode addon pada host] -->|Bind mount read-only| O
+    Q[Script container pada host] -->|Bind mount read-only| O
     S[Secret lokal] -->|Konfigurasi runtime| O
     S -->|Password role database| P
 ```

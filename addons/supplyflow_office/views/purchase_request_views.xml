@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_request_list" model="ir.ui.view">
+        <field name="name">supplyflow.request.list</field>
+        <field name="model">supplyflow.request</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="state == 'cancelled'" decoration-danger="state == 'rejected'">
+                <field name="name"/>
+                <field name="requester_id"/>
+                <field name="vendor_id"/>
+                <field name="warehouse_id" optional="show"/>
+                <field name="requested_date"/>
+                <field name="amount_estimated" sum="Estimated total"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="state" widget="badge" decoration-info="state == 'submitted'" decoration-success="state in ('approved', 'rfq_created')" decoration-danger="state == 'rejected'"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_request_form" model="ir.ui.view">
+        <field name="name">supplyflow.request.form</field>
+        <field name="model">supplyflow.request</field>
+        <field name="arch" type="xml">
+            <form string="Purchase Requisition" class="sf_document" duplicate="false">
+                <header>
+                    <button name="action_submit" string="Submit for Approval" type="object" class="oe_highlight" invisible="state != 'draft' or requester_id != uid"/>
+                    <button name="action_approve" string="Approve" type="object" class="oe_highlight" groups="supplyflow_office.group_approver" invisible="state != 'submitted' or requester_id == uid"/>
+                    <button name="action_reject" string="Reject" type="object" groups="supplyflow_office.group_approver" invisible="state != 'submitted' or requester_id == uid"/>
+                    <button name="action_create_rfq" string="Create RFQ" type="object" class="oe_highlight" groups="supplyflow_office.group_approver" invisible="state != 'approved'"/>
+                    <button name="action_create_rfq" string="Open RFQ" type="object" groups="supplyflow_office.group_approver" invisible="not purchase_order_id"/>
+                    <button name="action_reset_draft" string="Revise Draft" type="object" invisible="state != 'rejected' or requester_id != uid"/>
+                    <button name="action_cancel" string="Withdraw" type="object" confirm="Withdraw this requisition?" invisible="state not in ('draft', 'submitted', 'rejected') or requester_id != uid"/>
+                    <button name="action_cancel" string="Cancel Approval" type="object" groups="supplyflow_office.group_approver" confirm="Cancel this approval before an RFQ is created? The cancellation is recorded in the chatter." invisible="state != 'approved' or requester_id == uid"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,rfq_created"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="requester_id"/>
+                            <field name="vendor_id" readonly="state != 'draft' or requester_id != uid" domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]"/>
+                            <field name="warehouse_id" readonly="state != 'draft' or requester_id != uid" domain="[('company_id', '=', company_id)]"/>
+                        </group>
+                        <group>
+                            <field name="requested_date" readonly="state != 'draft' or requester_id != uid"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="id"/>
+                            <field name="currency_id" invisible="True"/>
+                            <field name="purchase_order_id" invisible="not purchase_order_id"/>
+                        </group>
+                    </group>
+                    <field name="purpose" placeholder="Which operational need will this purchase address?" readonly="state != 'draft' or requester_id != uid"/>
+                    <notebook>
+                        <page string="Requested Items">
+                            <field name="line_ids" readonly="state != 'draft' or requester_id != uid">
+                                <list editable="bottom">
+                                    <field name="company_id" column_invisible="True"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                    <field name="product_id" domain="[('purchase_ok', '=', True), ('is_storable', '=', True), '|', ('company_id', '=', False), ('company_id', '=', parent.company_id)]"/>
+                                    <field name="name"/>
+                                    <field name="product_qty"/>
+                                    <field name="product_uom_id" readonly="True"/>
+                                    <field name="price_estimated"/>
+                                    <field name="subtotal" sum="Total"/>
+                                </list>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="amount_estimated"/>
+                            </group>
+                            <div class="text-muted">Estimates use the company's currency before taxes. Vendor prices and taxes are reviewed on the RFQ.</div>
+                        </page>
+                        <page string="Approval">
+                            <group>
+                                <field name="decision_reason" readonly="state != 'submitted' or requester_id == uid" groups="supplyflow_office.group_approver" placeholder="Record your review. A reason is required to reject."/>
+                                <field name="decision_reason" readonly="True" groups="!supplyflow_office.group_approver"/>
+                            </group>
+                            <group>
+                                <group string="Submission"><field name="submitted_by_id"/><field name="submitted_at"/></group>
+                                <group string="Approval"><field name="approved_by_id"/><field name="approved_at"/></group>
+                                <group string="Rejection"><field name="rejected_by_id"/><field name="rejected_at"/></group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="view_request_search" model="ir.ui.view">
+        <field name="name">supplyflow.request.search</field>
+        <field name="model">supplyflow.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/><field name="vendor_id"/><field name="requester_id"/>
+                <filter name="my_requests" string="My Requisitions" domain="[('requester_id', '=', uid)]"/>
+                <filter name="awaiting_approval" string="Awaiting Approval" domain="[('state', '=', 'submitted')]"/>
+                <filter name="ready_for_rfq" string="Ready for RFQ" domain="[('state', '=', 'approved')]"/>
+                <separator/>
+                <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                <filter name="group_requester" string="Requester" context="{'group_by': 'requester_id'}"/>
+                <filter name="group_warehouse" string="Warehouse" context="{'group_by': 'warehouse_id'}"/>
+            </search>
+        </field>
+    </record>
+    <record id="action_requests" model="ir.actions.act_window">
+        <field name="name">Purchase Requisitions</field>
+        <field name="res_model">supplyflow.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_request_search"/>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">Request office supplies for independent review.</p><p>Approved requisitions can become standard Odoo requests for quotation.</p></field>
+    </record>
+</odoo>

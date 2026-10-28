@@ -8,14 +8,16 @@ Dokumen ini menjelaskan rancangan awal. Perintah dan hasil verifikasi harus dico
 
 | Komponen | Pilihan | Alasan |
 | --- | --- | --- |
-| ERP | Odoo Community 19, image `19.0-20261015` | Versi stabil yang dipatok untuk pengembangan dan pengujian addon ini |
+| ERP | Image resmi Odoo Community `19.0-20261015` dengan digest tetap | Menjalankan runtime upstream tanpa membuat image custom |
 | Database | PostgreSQL 17 | Database relasional untuk data Odoo; dipisahkan dari proses aplikasi |
 | Addon | Python, XML, CSV security, QWeb sesuai kebutuhan | Memakai model, views, aksi, ACL, dan laporan Odoo secara langsung |
 | Antarmuka | Web client native Odoo | Pengguna dapat berpindah antara permintaan, RFQ, receipt, dan retur dengan pola yang sama |
 | Runtime lokal | Docker Compose | Menjalankan versi aplikasi dan database yang sesuai tanpa memasang seluruh dependency di Windows |
 | Host aplikasi | `127.0.0.1:8070` | Akses pengembangan lokal; tidak membuka ERP ke jaringan publik |
 
-Odoo 20 tersedia, tetapi proyek ini sengaja menargetkan seri 19. Mematok tag bertanggal mengurangi perubahan tak terduga pada runtime. Tag bertanggal tetap berbeda dari pin digest; digest image yang benar-benar diuji perlu dicatat bila diperlukan reproduksi bit-for-bit.
+Odoo 20 tersedia, tetapi proyek ini sengaja menargetkan seri 19. Referensi image Odoo pada Compose dipatok ke `odoo:19.0-20261015@sha256:27f920e002c43a1af7022a68f3cc17db71a2f9f3348800cb050721ce54893e49`. Kode addon dan script dipasang read-only dari checkout repo. Menjalankan image upstream secara langsung menghindari proses pembangunan image custom serta salinan layer tambahan pada komputer lokal.
+
+Pin image Odoo tidak mematok seluruh lingkungan: kode mengikuti checkout Git, sedangkan PostgreSQL masih memakai tag seri `17-alpine`. Catatan verifikasi perlu menyebut image/digest dan commit yang benar-benar dipakai. Dependency Python untuk addon ini mengikuti image Odoo; proyek tidak menjalankan `pip install` tambahan saat startup.
 
 Community dan Enterprise mempunyai lisensi serta cakupan yang berbeda. Implementasi ini memakai Community dan addon standar `purchase_stock`, `sale_stock`, serta `mail`; tidak mengambil kode atau aset Enterprise. Lisensi addon dan lisensi upstream harus dibaca pada berkas masing-masing.
 
@@ -58,7 +60,7 @@ Diagram menyoroti hubungan addon. Diagram ini tidak menggantikan ERD lengkap Odo
 
 ### ACL dan record rule
 
-ACL membatasi operasi model berdasarkan kelompok. Record rule membatasi data yang terlihat dan dapat diubah, termasuk perusahaan yang diizinkan pada sesi. Pengaju biasa bekerja dengan dokumennya sendiri; penyetuju meninjau dokumen yang sesuai perusahaan dan izinnya.
+ACL membatasi operasi model berdasarkan kelompok. Record rule membatasi data ke perusahaan aktif yang diizinkan pada sesi. Anggota SupplyFlow dapat membaca dokumen dalam perusahaan itu untuk koordinasi; metode server membatasi pengeditan draft kepada pengaju/pelapor dokumen tersebut. Penyetuju meninjau dokumen sesuai perusahaan dan izinnya.
 
 XML ID kelompok addon adalah `supplyflow_office.group_user` dan `supplyflow_office.group_approver`. Workspace menghitung data melalui izin pengguna dan perusahaan aktif, bukan memakai `sudo()` untuk menyajikan semua dokumen perusahaan.
 
@@ -98,7 +100,8 @@ Database target dibatasi ke database aplikasi dan `list_db` dimatikan. Role apli
 
 | Script | Kontrak |
 | --- | --- |
-| `scripts/Start.ps1` | Build image, bootstrap database/addon bila diperlukan, lalu nyalakan stack |
+| `scripts/Start.ps1` | Tarik image resmi, bootstrap database/addon bila diperlukan, lalu nyalakan stack |
+| `scripts/Start.ps1 -SkipPull` | Lewati pull bila image yang sesuai sudah tersedia lokal |
 | `scripts/Start.ps1 -WithTrainingData` | Menjalankan setup dengan data latihan sintetis yang dipilih secara eksplisit |
 | `scripts/Load-TrainingData.ps1` | Memuat data latihan ke instalasi lokal yang sudah disiapkan |
 | `scripts/Stop.ps1` | Menghentikan stack milik SupplyFlow tanpa menghapus data |
@@ -141,4 +144,4 @@ Odoo dan PostgreSQL membutuhkan memori selain kapasitas disk. Pada komputer deng
 - [Entrypoint image Odoo 19](https://github.com/odoo/docker/blob/master/19.0/entrypoint.sh)
 - [Kode Purchase dan Inventory Odoo 19](https://github.com/odoo/odoo/tree/19.0/addons/purchase_stock)
 
-Tautan upstream dapat bergerak mengikuti pemeliharaan seri 19. Versi runtime yang dipatok dan hasil pengujian proyek tetap menjadi acuan perilaku build ini.
+Tautan upstream dapat bergerak mengikuti pemeliharaan seri 19. Versi runtime yang dipatok, checkout kode, dan hasil pengujian proyek tetap menjadi acuan perilaku instalasi ini.

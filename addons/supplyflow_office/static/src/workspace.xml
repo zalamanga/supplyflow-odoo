@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <t t-name="supplyflow_office.Workspace">
+        <Layout display="{controlPanel: {}}" className="'sf_workspace'">
+            <div class="sf_content">
+                <header class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+                    <div>
+                        <h1 class="h3 mb-2">Office distribution operations</h1>
+                        <p class="text-muted mb-0" t-if="state.data"><t t-esc="state.data.company"/> · Purchase approvals and supplier follow-up</p>
+                    </div>
+                    <button class="btn btn-outline-secondary" t-on-click="load" t-att-disabled="state.loading">Refresh</button>
+                </header>
+                <div t-if="state.loading" class="py-5" role="status">Loading operations…</div>
+                <div t-elif="state.error" class="alert alert-danger" role="alert">
+                    <p t-esc="state.error"/>
+                    <button class="btn btn-outline-danger" t-on-click="load">Try again</button>
+                </div>
+                <t t-elif="state.data">
+                    <div class="sf_metrics mb-4">
+                        <button class="sf_metric" t-on-click="() => this.openRequests(true)">
+                            <span>Requests awaiting approval</span><strong t-esc="state.data.pending_requests"/>
+                        </button>
+                        <button class="sf_metric" t-on-click="() => this.openIssues('open_reviewed')">
+                            <span>Open supplier issues</span><strong t-esc="state.data.open_issues"/>
+                        </button>
+                        <button class="sf_metric" t-on-click="() => this.openIssues('overdue')">
+                            <span>Issues past resolution date</span><strong t-esc="state.data.overdue_issues"/>
+                        </button>
+                        <button class="sf_metric" t-on-click="() => this.openIssues('waiting_warehouse')">
+                            <span>Returns awaiting warehouse</span><strong t-esc="state.data.pending_returns"/>
+                        </button>
+                    </div>
+                    <section class="sf_recent">
+                        <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+                            <h2 class="h5 mb-0">Recent purchase requests</h2>
+                            <button class="btn btn-primary" t-on-click="() => this.openRequests()">All requests</button>
+                        </div>
+                        <t t-if="!state.data.recent_requests.length">
+                            <p class="text-muted mb-0">No purchase requests yet. Open Purchase requests to record the vendor, warehouse and items your team needs.</p>
+                        </t>
+                        <div t-else="" class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead><tr><th>Request</th><th>Supplier</th><th>Requested by</th><th>State</th><th class="text-end">Estimate before tax</th></tr></thead>
+                                <tbody>
+                                    <tr t-foreach="state.data.recent_requests" t-as="request" t-key="request.id">
+                                        <td><button class="btn btn-link p-0 text-start" t-on-click="() => this.openRequest(request.id)" t-esc="request.name"/></td>
+                                        <td t-esc="request.vendor"/><td t-esc="request.requester"/><td t-esc="request.state"/><td class="text-end text-nowrap" t-esc="request.amount"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                    <p class="text-muted mt-4 mb-0">Use the standard Purchase, Inventory and Sales apps for RFQs, receipts, deliveries and stock reports. SupplyFlow links its approvals to those documents.</p>
+                </t>
+            </div>
+        </Layout>
+    </t>
+</templates>

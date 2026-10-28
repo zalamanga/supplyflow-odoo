@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_request" model="ir.actions.report">
+        <field name="name">Purchase request summary</field>
+        <field name="model">supplyflow.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">supplyflow_office.report_request</field>
+        <field name="report_file">supplyflow_office.report_request</field>
+        <field name="binding_model_id" ref="model_supplyflow_request"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Purchase request - %s' % object.name.replace('/', '-')</field>
+    </record>
+    <template id="report_request">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Purchase request <span t-field="o.name"/></h2>
+                        <p>This summary records an internal request. Review the linked RFQ in Purchase before placing an order with the supplier.</p>
+                        <div class="row mb-4">
+                            <div class="col-6"><strong>Supplier</strong><div t-field="o.vendor_id.name"/><strong>Receiving warehouse</strong><div t-field="o.warehouse_id.name"/></div>
+                            <div class="col-6"><strong>Requested by</strong><div t-field="o.requester_id.name"/><strong>Required date</strong><div t-field="o.requested_date"/><strong>Status</strong><div t-field="o.state"/></div>
+                        </div>
+                        <h3 class="h5">Purpose</h3><p t-field="o.purpose"/>
+                        <table class="table table-sm">
+                            <thead><tr><th>Item</th><th class="text-end">Quantity</th><th>Unit</th><th class="text-end">Estimated unit price</th><th class="text-end">Subtotal</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="o.line_ids" t-as="line">
+                                    <td><span t-field="line.name"/></td>
+                                    <td class="text-end"><span t-field="line.product_qty"/></td>
+                                    <td><span t-field="line.product_uom_id.name"/></td>
+                                    <td class="text-end"><span t-field="line.price_estimated"/></td>
+                                    <td class="text-end"><span t-field="line.subtotal"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p class="text-end"><strong>Estimate before taxes: </strong><span t-field="o.amount_estimated"/></p>
+                        <div t-if="o.approved_by_id"><strong>Approved by: </strong><span t-field="o.approved_by_id.name"/> (<span t-field="o.approved_at"/>)</div>
+                        <div t-if="o.rejected_by_id"><strong>Rejected by: </strong><span t-field="o.rejected_by_id.name"/> (<span t-field="o.rejected_at"/>)</div>
+                        <p t-if="o.decision_reason"><strong>Decision note: </strong><span t-field="o.decision_reason"/></p>
+                        <p t-if="o.purchase_order_id"><strong>Linked RFQ: </strong><span t-field="o.purchase_order_id.name"/></p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

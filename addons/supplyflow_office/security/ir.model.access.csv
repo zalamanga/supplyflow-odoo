@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_request_user,SupplyFlow request,model_supplyflow_request,group_user,1,1,1,1
+access_request_line_user,SupplyFlow request line,model_supplyflow_request_line,group_user,1,1,1,1
+access_issue_user,SupplyFlow supplier issue,model_supplyflow_issue,group_user,1,1,1,1
+access_issue_line_user,SupplyFlow issue line,model_supplyflow_issue_line,group_user,1,1,1,1

@@ -1,0 +1,13 @@
+{
+  "name": "supplyflow-office-verification",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test:browser": "playwright test --grep-invert @capture",
+    "screenshots": "playwright test --grep @capture"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
+  }
+}

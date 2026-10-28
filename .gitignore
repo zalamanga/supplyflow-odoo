@@ -1,0 +1,13 @@
+.secrets/
+.runtime/
+.local/
+.backups/
+output/
+node_modules/
+test-results/
+playwright-report/
+__pycache__/
+*.py[cod]
+.env
+.DS_Store
+Thumbs.db
