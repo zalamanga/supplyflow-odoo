@@ -118,6 +118,8 @@ Mulai dari [panduan kode](docs/CODE-GUIDE.md) untuk memahami cara kerja proyek. 
 
 Hasil lokal: **42 tes ORM**, **25 tes validator arsip**, dan **9 skenario browser** lulus. Satu tes capture tambahan menghasilkan delapan screenshot. Latihan restore menggunakan volume baru dan membandingkan data serta berkas filestore; rincian bukti dan batas pemeriksaan ada di [catatan verifikasi](docs/VERIFICATION.md).
 
+[GitHub Actions pada sumber terakhir](https://github.com/zalamanga/supplyflow-odoo/actions/runs/40655694868) juga lulus: instalasi baru, 42 tes ORM termasuk akses lintas perusahaan lewat ID, 25 tes arsip, pemuatan data latihan, dan sembilan workflow Chromium.
+
 ```powershell
 # Membuat database uji tersendiri, menjalankan tes addon, lalu menghapus database uji.
 # Layanan Odoo proyek ini dihentikan selama tes untuk mengurangi penggunaan memori.

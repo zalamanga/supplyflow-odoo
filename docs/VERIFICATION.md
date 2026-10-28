@@ -1,6 +1,6 @@
 # Hasil verifikasi SupplyFlow Office
 
-Tanggal: 28 Oktober 2026. Dokumen ini mencatat pemeriksaan yang sudah menghasilkan bukti dan pekerjaan yang masih menunggu hasil. Full run gabungan sepuluh tes browser lulus, dan delapan screenshot sudah diambil serta diperiksa. Publikasi GitHub dan CI remote masih menunggu hasil akhir pada catatan ini.
+Tanggal: 28 Oktober 2026. Proyek sudah dipublikasikan di [zalamanga/supplyflow-odoo](https://github.com/zalamanga/supplyflow-odoo). Full run lokal mencakup sepuluh tes browser dan delapan screenshot. [GitHub Actions](https://github.com/zalamanga/supplyflow-odoo/actions/runs/40655694868) juga lulus pada sumber implementasi dan tes terakhir.
 
 Status `PASS` berlaku pada skenario yang disebutkan. Status `PARSIAL` berarti sebagian kebutuhan sudah diperiksa. `PENDING` berarti hasil akhir belum tersedia; keberadaan kode tes tidak dihitung sebagai tes lulus.
 
@@ -20,7 +20,7 @@ Status `PASS` berlaku pada skenario yang disebutkan. Status `PARSIAL` berarti se
 | Backup dingin dan restore terisolasi | PASS | Arsip dipulihkan ke stack/volume baru; fingerprint 16 tabel dan berkas penanda cocok |
 | Restart instance asli | PASS pada data yang diperiksa | Aplikasi kembali sehat dan lampiran penanda tetap cocok |
 | Screenshot README | PASS | Delapan PNG nyata diambil, diperiksa secara visual, dan sudah dirujuk README |
-| Publikasi GitHub/CI remote | PENDING | Belum ada hasil publikasi atau run CI remote yang dicatat sebagai selesai |
+| Publikasi GitHub/CI remote | PASS | Repo publik, branch main; CI commit ad7be04 lulus dengan 42 tes ORM, 25 tes arsip, dan sembilan workflow Chromium |
 
 ## Instalasi dan batas konfigurasi
 
@@ -129,12 +129,16 @@ ID mengacu ke [PRD](PRD.md). Status parsial mempertahankan bagian kebutuhan yang
 | A13 | PASS | Aturan shortage/catatan lulus pada ORM dan browser; penyelesaian accepted tidak membuat picking retur |
 | A14 | PASS | Retur manual/pending/cancel diperhitungkan; tes integrasi membandingkan stok sebelum dan setelah validasi retur |
 | A15 | PASS pada alur yang diuji | Pembelian, receipt sebagian/backorder, retur, penjualan/delivery, gudang terpilih, dan transfer internal diperiksa melalui metode native |
-| A16 | PARSIAL | Tes ORM isolasi permintaan/baris serta kecocokan perusahaan kasus lulus; catatan ini tidak mengklaim seluruh kombinasi akses HTTP lintas perusahaan diuji |
+| A16 | PASS pada skenario ORM yang diperiksa | Pengguna dengan satu perusahaan aktif tidak menemukan, membaca lewat ID, atau mengubah dokumen/baris perusahaan lain pada kedua alur; pengajuan dokumen juga ditolak; fixture valid/nonkosong dan ACL model tersedia; tes diperluas ini lulus di CI |
 | A17 | PASS pada kontrol custom yang dipetakan | Full run mencakup seluruh kelompok tindakan di atas, termasuk empty/error/loading/keyboard/390 px pada workspace serta pembatalan kasus oleh pelapor dan Approver |
 | A18 | PASS pada data yang diperiksa | Restart instance asli sehat dan lampiran penanda tetap cocok |
 | A19 | PASS | Restore pada stack baru, fingerprint 16 tabel cocok, dan marker filestore 54 byte cocok |
 | A20 | PASS | README menjelaskan batas standar/custom serta merujuk delapan screenshot nyata yang sudah diperiksa visual |
 
-## Yang belum dinyatakan selesai
+## Publikasi dan CI
 
-Publikasi GitHub dan GitHub Actions remote masih menunggu pembaruan catatan ini. Penyempurnaan visual terakhir sudah dimuat melalui update addon, screenshot terkait sudah diambil ulang, dan pemeriksaan visual/kontras/mobile sudah selesai. CI akan menjalankan kembali alur bisnis pada sumber terakhir.
+Sumber implementasi dan tes terakhir adalah commit [`ad7be04`](https://github.com/zalamanga/supplyflow-odoo/commit/ad7be04f1d9cfac4b9c1542236671cf680ccca61). [Run 40655694868](https://github.com/zalamanga/supplyflow-odoo/actions/runs/40655694868) selesai dengan status success pada runner Ubuntu yang baru: 25 tes arsip, 42 tes ORM dengan nol gagal/error, instalasi serta seed latihan, dan sembilan workflow Chromium lulus. Log menyebut 42 post-tests dalam 9,66 detik dan sembilan workflow dalam 1,2 menit; angka tersebut bukan tolok ukur performa aplikasi.
+
+Penyempurnaan visual terakhir sudah dimuat melalui update addon, screenshot terkait sudah diambil ulang, dan pemeriksaan visual/kontras/mobile sudah selesai. CI tersebut memakai sumber XML/SCSS terakhir dan tes akses lintas perusahaan yang diperluas. Pembaruan catatan publikasi setelahnya hanya mengubah dokumentasi.
+
+Server lokal dihentikan sesudah pemeriksaan untuk mengurangi penggunaan memori. Database dan filestore latihan tetap ada pada volume proyek; `Start.ps1 -SkipPull` menyalakannya kembali. Database uji lokal yang sempat ditahan sudah dihapus bersama filestore-nya. Tidak ada data instance lain yang dibersihkan.
